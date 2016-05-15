@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="main_background">#03A9F4</color>
+    <color name="ambient_background">#000</color>
+    <color name="background2">#000088</color>
+    <color name="analog_hands">#cccccc</color>
+    <color name="white">#fff</color>
+    <color name="yellow">#FFD740</color>
+
+
+</resources>

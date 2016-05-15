@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Sunshine Watch Face</string>
+    <string name="my_analog_name">My Analog</string>
+    <string name="digital_pm">pm</string>
+    <string name="digital_am">am</string>
+
+</resources>

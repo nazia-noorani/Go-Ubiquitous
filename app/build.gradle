@@ -1,0 +1,49 @@
+apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
+def MyOpenWeatherMapApiKey = "43ccc3cf2fb25e1070a5e3194f7f4596";
+android {
+
+    signingConfigs {
+
+        defaultConfig {
+            keyAlias 'mykey'
+            keyPassword 'udacity'
+            storeFile file('/Users/nazianoorani/Desktop/Advanced_Android_Development-7.05_Pretty_Wallpaper_Time/keystore.jks')
+            storePassword 'udacity'
+        }
+    }
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
+
+    defaultConfig {
+        applicationId "com.example.android.sunshine.app"
+        minSdkVersion 10
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.defaultConfig
+        }
+    }
+
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    wearApp project(':sunshinewatchface')
+    compile 'com.github.bumptech.glide:glide:3.5.2'
+    compile 'com.android.support:support-annotations:24.0.0-alpha2'
+    compile 'com.android.support:gridlayout-v7:24.0.0-alpha2'
+    compile 'com.android.support:cardview-v7:24.0.0-alpha2'
+    compile 'com.android.support:appcompat-v7:24.0.0-alpha2'
+    compile 'com.android.support:design:24.0.0-alpha2'
+    compile 'com.android.support:recyclerview-v7:24.0.0-alpha2'
+    compile 'com.google.android.apps.muzei:muzei-api:2.0'
+    compile 'com.google.android.gms:play-services-gcm:8.4.0'
+    compile 'com.google.android.gms:play-services-wearable:8.4.0'
+    compile 'com.google.android.support:wearable:1.4.0'
+}
