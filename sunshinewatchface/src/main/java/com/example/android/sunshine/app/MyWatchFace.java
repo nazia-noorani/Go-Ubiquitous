@@ -16,7 +16,13 @@
 
 package com.example.android.sunshine.app;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -46,6 +52,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import nazianoorani.sunshinewatchface.R;
@@ -128,14 +135,14 @@ public class MyWatchFace extends CanvasWatchFaceService {
         /**
          * Handles time zone and locale changes.
          */
-//        final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-//            @Override
-//            public void onReceive(Context context, Intent intent) {
-//                mCalendar.setTimeZone(TimeZone.getDefault());
-//                initFormats();
-//                invalidate();
-//            }
-//        };
+        final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                mCalendar.setTimeZone(TimeZone.getDefault());
+                initFormats();
+                invalidate();
+            }
+        };
 
         /**
          * Unregistering an unregistered receiver throws an exception. Keep track of the
@@ -169,22 +176,16 @@ public class MyWatchFace extends CanvasWatchFaceService {
         float mLineHeight;
         String mAmString;
         String mPmString;
-//        int mInteractiveBackgroundColor =
-//                MyWatchFaceUtil.COLOR_VALUE_DEFAULT_AND_AMBIENT_BACKGROUND;
-//        int mInteractiveHourDigitsColor =
-//                MyWatchFaceUtil.COLOR_VALUE_DEFAULT_AND_AMBIENT_HOUR_DIGITS;
-//        int mInteractiveMinuteDigitsColor =
-//                MyWatchFaceUtil.COLOR_VALUE_DEFAULT_AND_AMBIENT_MINUTE_DIGITS;
-//        int mInteractiveSecondDigitsColor =
-//                MyWatchFaceUtil.COLOR_VALUE_DEFAULT_AND_AMBIENT_SECOND_DIGITS;
-
         /**
          * Whether the display supports fewer bits for each color in ambient mode. When true, we
          * disable anti-aliasing in ambient mode.
          */
         boolean mLowBitAmbient;
         private boolean mUiUpdated;
-        private Paint mHighTempPaint;
+        private Paint mLTempPaint;
+        private Bitmap mWeatherIconBitmap;
+        private Paint mIconPaint;
+        private Paint mHTempPaint;
 
         @Override
         public void onCreate(SurfaceHolder holder) {
@@ -198,7 +199,6 @@ public class MyWatchFace extends CanvasWatchFaceService {
                     .addOnConnectionFailedListener(this)
                     .addApi(Wearable.API)
                     .build();
-//            mGoogleApiClient.connect();
             setWatchFaceStyle(new WatchFaceStyle.Builder(MyWatchFace.this)
                     .setCardPeekMode(WatchFaceStyle.PEEK_MODE_VARIABLE)
                     .setBackgroundVisibility(WatchFaceStyle.BACKGROUND_VISIBILITY_INTERRUPTIVE)
@@ -218,8 +218,9 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mSecondPaint = createTextPaint(resources.getColor(R.color.yellow));
             mAmPmPaint = createTextPaint(resources.getColor(R.color.yellow));
             mColonPaint = createTextPaint(resources.getColor(R.color.yellow));
-            mHighTempPaint =createTextPaint(resources.getColor(R.color.yellow));
-
+            mHTempPaint =createTextPaint(resources.getColor(R.color.yellow),Typeface.DEFAULT_BOLD);
+            mLTempPaint = createTextPaint(resources.getColor(R.color.yellow));
+            mIconPaint = new Paint();
             mCalendar = Calendar.getInstance();
             mDate = new Date();
             initFormats();
@@ -252,16 +253,12 @@ public class MyWatchFace extends CanvasWatchFaceService {
 //
             if (visible) {
                 mGoogleApiClient.connect();
-
-
-////                registerReceiver();
-//
-//                // Update time zone and date formats, in case they changed while we weren't visible.
-//                mCalendar.setTimeZone(TimeZone.getDefault());
-//                initFormats();
+                registerReceiver();
+//              // Update time zone and date formats, in case they changed while we weren't visible.
+                mCalendar.setTimeZone(TimeZone.getDefault());
+                initFormats();
             } else {
-//                unregisterReceiver();
-//
+                unregisterReceiver();
                 if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
                     Wearable.DataApi.removeListener(mGoogleApiClient, this);
                     mGoogleApiClient.disconnect();
@@ -280,23 +277,23 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mDateFormat.setCalendar(mCalendar);
         }
 
-//        private void registerReceiver() {
-//            if (mRegisteredReceiver) {
-//                return;
-//            }
-//            mRegisteredReceiver = true;
-//            IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
-//            filter.addAction(Intent.ACTION_LOCALE_CHANGED);
-//            MyWatchFace.this.registerReceiver(mReceiver, filter);
-//        }
-//
-//        private void unregisterReceiver() {
-//            if (!mRegisteredReceiver) {
-//                return;
-//            }
-//            mRegisteredReceiver = false;
-//            MyWatchFace.this.unregisterReceiver(mReceiver);
-//        }
+        private void registerReceiver() {
+            if (mRegisteredReceiver) {
+                return;
+            }
+            mRegisteredReceiver = true;
+            IntentFilter filter = new IntentFilter(Intent.ACTION_TIMEZONE_CHANGED);
+            filter.addAction(Intent.ACTION_LOCALE_CHANGED);
+            MyWatchFace.this.registerReceiver(mReceiver, filter);
+        }
+
+        private void unregisterReceiver() {
+            if (!mRegisteredReceiver) {
+                return;
+            }
+            mRegisteredReceiver = false;
+            MyWatchFace.this.unregisterReceiver(mReceiver);
+        }
 
         @Override
         public void onApplyWindowInsets(WindowInsets insets) {
@@ -321,8 +318,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
             mSecondPaint.setTextSize(textSize);
             mAmPmPaint.setTextSize(amPmSize);
             mColonPaint.setTextSize(textSize);
-            mHighTempPaint.setTextSize(resources.getDimension(R.dimen.digital_date_text_size));
-
+            mHTempPaint.setTextSize(resources.getDimension(R.dimen.digital_temp_text_size));
+            mLTempPaint.setTextSize(resources.getDimension(R.dimen.digital_temp_text_size));
             mColonWidth = mColonPaint.measureText(COLON_STRING);
         }
 
@@ -358,6 +355,11 @@ public class MyWatchFace extends CanvasWatchFaceService {
             adjustPaintColorToCurrentMode(mBackgroundPaint, getResources().getColor(R.color.main_background), getResources().getColor(R.color.black));
             adjustPaintColorToCurrentMode(mHourPaint, getResources().getColor(R.color.yellow), getResources().getColor(R.color.white));
             adjustPaintColorToCurrentMode(mMinutePaint, getResources().getColor(R.color.yellow), getResources().getColor(R.color.white));
+            adjustPaintColorToCurrentMode(mColonPaint, getResources().getColor(R.color.yellow), getResources().getColor(R.color.white));
+            adjustPaintColorToCurrentMode(mHTempPaint, getResources().getColor(R.color.yellow), getResources().getColor(R.color.white));
+            adjustPaintColorToCurrentMode(mLTempPaint, getResources().getColor(R.color.yellow), getResources().getColor(R.color.white));
+            adjustPaintColorToCurrentMode(mDatePaint, getResources().getColor(R.color.yellow), getResources().getColor(R.color.white));
+            adjustPaintColorToCurrentMode(mAmPmPaint, getResources().getColor(R.color.yellow), getResources().getColor(R.color.white));
             // Actually, the seconds are not rendered in the ambient mode, so we could pass just any
             // value as ambientColor here.
             adjustPaintColorToCurrentMode(mSecondPaint, getResources().getColor(R.color.yellow), getResources().getColor(R.color.white));
@@ -370,7 +372,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 mSecondPaint.setAntiAlias(antiAlias);
                 mAmPmPaint.setAntiAlias(antiAlias);
                 mColonPaint.setAntiAlias(antiAlias);
-                mHighTempPaint.setAntiAlias(antiAlias);
+                mHTempPaint.setAntiAlias(antiAlias);
+                mLTempPaint.setAntiAlias(antiAlias);
 
             }
             invalidate();
@@ -404,6 +407,8 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 mMinutePaint.setAlpha(alpha);
                 mColonPaint.setAlpha(alpha);
                 mAmPmPaint.setAlpha(alpha);
+                mHTempPaint.setAlpha(alpha);
+                mLTempPaint.setAlpha(alpha);
                 invalidate();
             }
         }
@@ -491,26 +496,32 @@ public class MyWatchFace extends CanvasWatchFaceService {
                         mCalendar.get(Calendar.AM_PM)), x, mYOffset, mAmPmPaint);
             }
 
-            canvas.drawText("15",x++,mYOffset,mHighTempPaint);
+
             // Only render the day of week and date if there is no peek card, so they do not bleed
             // into each other in ambient mode.
             if (getPeekCardPosition().isEmpty()) {
                 // Day of week
-                canvas.drawText(
-                        mDayOfWeekFormat.format(mDate),
-                        mXOffset, mYOffset + mLineHeight, mDatePaint);
+                canvas.drawText(mDayOfWeekFormat.format(mDate).substring(0,3)+",",
+                        mXOffset, mYOffset + mLineHeight * 1.2f, mDatePaint);
                 // Date
                 canvas.drawText(
                         mDateFormat.format(mDate),
-                        mXOffset, mYOffset + mLineHeight * 2, mDatePaint);
+                        mXOffset * 2.2f, mYOffset + mLineHeight * 1.2f , mDatePaint);
             }
 
 
 
-
+            if(mUiUpdated) {
+                if (!isInAmbientMode()) {
+                    canvas.drawBitmap(mWeatherIconBitmap, x / 5, mYOffset + mLineHeight * 2, mIconPaint);
+                }
+                canvas.drawText(mHighTemp , x / 1.5f, mYOffset + mLineHeight * 3, mHTempPaint);
+                x = x / 2 + 2 * mHTempPaint.measureText(mHighTemp);
+                canvas.drawText( mLowTemp , x, mYOffset + mLineHeight * 3, mLTempPaint);
+            }
         }
 
-        /**
+        /*
          * Starts the {@link #mUpdateTimeHandler} timer if it should be running and isn't currently
          * or stops it if it shouldn't be running but currently is.
          */
@@ -569,38 +580,43 @@ public class MyWatchFace extends CanvasWatchFaceService {
                 DataItem dataItem = dataEvent.getDataItem();
                 if (!dataItem.getUri().getPath().equals(
                         DATA_PATH)) {
-                    Log.d("path match","true");
+                    Log.d(TAG,"Path Matched");
                     continue;
                 }
 
                 DataMapItem dataMapItem = DataMapItem.fromDataItem(dataItem);
-//                DataMap config = dataMapItem.getDataMap();
                 Log.i("ITEM RECEIVED", "true");
                 double highT = dataMapItem.getDataMap().getDouble("high");
                 double lowT = dataMapItem.getDataMap().getDouble("low");
                 long id = dataMapItem.getDataMap().getLong("id");
-                long date = dataMapItem.getDataMap().getLong("date");
-                int i = dataMapItem.getDataMap().getInt("count");
+
+
+
 
 
                 if (Log.isLoggable(TAG, Log.DEBUG)) {
                     Log.d(TAG, "Temperature DataItem updated:" + highT);
                 }
-                updateUiForTempData(highT,lowT,id,date);
+                updateUiForTempData(highT,lowT,id);
                 invalidate();
-//                updateUiForConfigDataMap(config);
             }
         }
 
-        private void updateUiForTempData(double high ,double low, long id , long date ) {
+        private void updateUiForTempData(double high ,double low, long id  ) {
 
-             mUiUpdated = true;
+            mUiUpdated = true;
+            String image = MyWatchFaceUtil.getArtResourceForWeatherCondition(id);
             mHighTemp = String.format("%3s",String.valueOf(high)) + "° C";
             mLowTemp = String.format("%3s",String.valueOf(low)) + "° C";
+            if(image == null){
+                image = "ic_clear";
+            }
+            int Id = getResources().getIdentifier( image , "drawable", getPackageName());
+
+            mWeatherIconBitmap = BitmapFactory.decodeResource(getResources(), Id);
 
             Log.i("highTemp","="+high);
             Log.i("highTemp","="+low);
-
 
 
         }

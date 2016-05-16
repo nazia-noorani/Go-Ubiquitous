@@ -43,6 +43,8 @@ import com.example.android.sunshine.app.muzei.WeatherMuzeiSource;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataMap;
 import com.google.android.gms.wearable.PutDataMapRequest;
@@ -718,18 +720,29 @@ public class SunshineSyncAdapter extends AbstractThreadedSyncAdapter
 
         public void run() {
             // Construct a DataRequest and send over the data layer
+            Log.v("DATA THREAD","THREAD WEATHER DATA" );
             PutDataMapRequest putDMR = PutDataMapRequest.create(path);
             putDMR.getDataMap().putAll(dataMap);
             PutDataRequest request = putDMR.asPutDataRequest();
             request.setUrgent();
-            DataApi.DataItemResult result = Wearable.DataApi.putDataItem(mGoogleClient, request).await();
-            Log.d("DATA THREAD","THREAD WEATHER DATA" );
-            if (result.getStatus().isSuccess()) {
-                Log.v("SENT", "DataMap: " + dataMap + " sent  ");
-            } else {
-                // Log an error
-                Log.v("ERROR", "ERROR: failed to send DataMap ");
-            }
+            PendingResult<DataApi.DataItemResult> pendingResult =
+                    Wearable.DataApi.putDataItem(mGoogleClient, request);
+
+            pendingResult.setResultCallback(new ResultCallback<DataApi.DataItemResult>() {
+                @Override
+                public void onResult(final DataApi.DataItemResult result) {
+                    if(result.getStatus().isSuccess()) {
+                        Log.v("SUCESS", "Data item set: " + result.getDataItem().getUri());
+                    }
+                }
+            });
+//            DataApi.DataItemResult result = Wearable.DataApi.putDataItem(mGoogleClient, request).await();
+//            if (pendingResult.getStatus().isSuccess()) {
+//                Log.v("SENT", "DataMap: " + dataMap + " sent  ");
+//            } else {
+//                // Log an error
+//                Log.v("ERROR", "ERROR: failed to send DataMap ");
+//            }
         }
     }
 
