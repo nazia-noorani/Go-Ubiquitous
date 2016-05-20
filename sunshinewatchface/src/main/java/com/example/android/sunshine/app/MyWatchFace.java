@@ -513,14 +513,16 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
 
 
-
+                if(mWeatherIconBitmap != null){
                 if (!isInAmbientMode()) {
                     canvas.drawBitmap(mWeatherIconBitmap, x / 5, mYOffset + mLineHeight * 2, mIconPaint);
                 }
-                canvas.drawText(mHighTemp , x , mYOffset + mLineHeight * 3, mHTempPaint);
+                }
+                if(mHighTemp != null && mLowTemp != null) {
+                    canvas.drawText(mHighTemp, x, mYOffset + mLineHeight * 3, mHTempPaint);
 
-                canvas.drawText(mLowTemp , x, mYOffset + mLineHeight * 4, mLTempPaint);
-
+                    canvas.drawText(mLowTemp, x, mYOffset + mLineHeight * 4, mLTempPaint);
+                }
         }
 
         /*
@@ -606,7 +608,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
         private void updateUiForTempData(double high ,double low, long id  ) {
 
-            
+
             String image = MyWatchFaceUtil.getArtResourceForWeatherCondition(id);
             mHighTemp = String.format("%3s",String.valueOf(high)) + "° C";
             mLowTemp = String.format("%3s",String.valueOf(low)) + "° C";
