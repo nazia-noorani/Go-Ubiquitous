@@ -7,8 +7,8 @@
     <dimen name="digital_am_pm_size">25dp</dimen>
     <dimen name="digital_am_pm_size_round">20dp</dimen>
     <dimen name="analog_hand_stroke">3dp</dimen>
-    <dimen name="digital_x_offset">40dp</dimen>
-    <dimen name="digital_x_offset_round">25dp</dimen>
-    <dimen name="digital_y_offset">40dp</dimen>
+    <dimen name="digital_x_offset">50dp</dimen>
+    <dimen name="digital_x_offset_round">60dp</dimen>
+    <dimen name="digital_y_offset">60dp</dimen>
     <dimen name="digital_line_height">25dp</dimen>
 </resources>

@@ -499,26 +499,28 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
             // Only render the day of week and date if there is no peek card, so they do not bleed
             // into each other in ambient mode.
+            x = mXOffset;
             if (getPeekCardPosition().isEmpty()) {
                 // Day of week
                 canvas.drawText(mDayOfWeekFormat.format(mDate).substring(0,3)+",",
                         mXOffset, mYOffset + mLineHeight * 1.2f, mDatePaint);
+                x += mDatePaint.measureText(mDayOfWeekFormat.format(mDate).substring(0,3)+"  ");
                 // Date
                 canvas.drawText(
                         mDateFormat.format(mDate),
-                        mXOffset * 2.2f, mYOffset + mLineHeight * 1.2f , mDatePaint);
+                        x, mYOffset + mLineHeight * 1.2f , mDatePaint);
             }
 
 
 
-            if(mUiUpdated) {
+
                 if (!isInAmbientMode()) {
                     canvas.drawBitmap(mWeatherIconBitmap, x / 5, mYOffset + mLineHeight * 2, mIconPaint);
                 }
-                canvas.drawText(mHighTemp , x / 1.5f, mYOffset + mLineHeight * 3, mHTempPaint);
-                x = x / 2 + 2 * mHTempPaint.measureText(mHighTemp);
-                canvas.drawText( mLowTemp , x, mYOffset + mLineHeight * 3, mLTempPaint);
-            }
+                canvas.drawText(mHighTemp , x , mYOffset + mLineHeight * 3, mHTempPaint);
+
+                canvas.drawText(mLowTemp , x, mYOffset + mLineHeight * 4, mLTempPaint);
+
         }
 
         /*
@@ -604,7 +606,7 @@ public class MyWatchFace extends CanvasWatchFaceService {
 
         private void updateUiForTempData(double high ,double low, long id  ) {
 
-            mUiUpdated = true;
+            
             String image = MyWatchFaceUtil.getArtResourceForWeatherCondition(id);
             mHighTemp = String.format("%3s",String.valueOf(high)) + "° C";
             mLowTemp = String.format("%3s",String.valueOf(low)) + "° C";
